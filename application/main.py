@@ -6,12 +6,20 @@ from flask_cors import CORS
 import os
 
 
+authorizations = {
+    'apikey': {
+        'type': 'apiKey',
+        'in': 'header',
+        'name': 'Authorization'
+    }
+}
+
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
     app.config["JSON_AS_ASCII"] = False
     app.config['CORS_HEADERS'] = 'Content-Type'
-    api = Api(app)
+    api = Api(app, authorizations=authorizations)
     register_routes(api, app)
     CORS(app, resources={r'/api/*': {'origins': '*'}})
     return app

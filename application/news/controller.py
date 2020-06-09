@@ -1,11 +1,12 @@
 from flask_restx import Namespace, Resource
 from flask import Response, request, jsonify, json
-from flask_cors import cross_origin
+
 
 from .service import NewsService
 from .model import news_model, set_news_model, types_entity_model, \
     types_entity_set_news_model, entity_with_type_model, fact_model, \
     ENTITY_TYPES
+from application.utilities.wrap_functions import user_token_required, admin_token_required
 from typing import List
 
 api = Namespace("News", description="news related operations")
@@ -19,6 +20,8 @@ fact = api.model("Fact", fact_model)
 
 @api.route("/")
 class NewsResourceList(Resource):
+    @api.doc(security='apikey')
+    @admin_token_required
     def get(self) -> List:
         """Get all News
         Limit 1000 news entities.
@@ -139,11 +142,11 @@ class NewsRelations(Resource):
         return NewsService.get_all_relations_in_news(news_id)
 
 
-@api.route("/<string:news_id>/relations/<string:entity_id>")
-class EntityNewsRelations(Resource):
-    def get(self, news_id, entity_id):
-        """Get all relations of an entity within a news"""
-        return NewsService.get_entity_relations_in_news(news_id,entity_id)
+# @api.route("/<string:news_id>/relations/<string:entity_id>")
+# class EntityNewsRelations(Resource):
+#     def get(self, news_id, entity_id):
+#         """Get all relations of an entity within a news"""
+#         return NewsService.get_entity_relations_in_news(news_id,entity_id)
 
 
 @api.route("/relations")
@@ -156,13 +159,13 @@ class SetNewsRelations(Resource):
         return NewsService.get_all_relations_in_set_news(set_news_id)
 
 
-@api.route("/relations/<string:entity_id>")
-class EntitySetNewsRelations(Resource):
-    @api.expect(news_set, validate=True)
-    def post(self, entity_id):
-        """Get all relations of an entity within a set of news"""
-        set_news_id = request.json["set_news_id"]
-        return NewsService.get_entity_relations_in_set_news(set_news_id,entity_id)
+# @api.route("/relations/<string:entity_id>")
+# class EntitySetNewsRelations(Resource):
+#     @api.expect(news_set, validate=True)
+#     def post(self, entity_id):
+#         """Get all relations of an entity within a set of news"""
+#         set_news_id = request.json["set_news_id"]
+#         return NewsService.get_entity_relations_in_set_news(set_news_id,entity_id)
 
 
 @api.route("/<string:news_id>/appearance/<string:entity_id>")

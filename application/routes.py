@@ -8,6 +8,8 @@ def register_routes(api, app, root="api"):
     from application.persons import register_routes as attach_persons
     from application.times import register_routes as attach_times
 
+    from application.auth import register_routes as attach_auth
+
 
 
 
@@ -20,4 +22,5 @@ def register_routes(api, app, root="api"):
     attach_organizations(api, app)
     attach_persons(api, app)
     attach_times(api, app)
+    attach_auth(api, app)
 

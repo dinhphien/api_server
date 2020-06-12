@@ -20,8 +20,7 @@ fact = api.model("Fact", fact_model)
 
 @api.route("/")
 class NewsResourceList(Resource):
-    @api.doc(security='apikey')
-    @admin_token_required
+    @user_token_required
     def get(self) -> List:
         """Get all News
         Limit 1000 news entities.
@@ -30,6 +29,7 @@ class NewsResourceList(Resource):
 
     @api.doc(responses={200: 'OK', 201: 'Created', 405: 'Method Not Allowed'})
     @api.expect(news, validate=True)
+    @admin_token_required
     def post(self):
         """Create a news
         Use this method to create a news.
@@ -56,6 +56,7 @@ class NewsResourceList(Resource):
 class NewsResource(Resource):
 
     @api.doc(responses={200: 'OK', 404: 'Not Found'})
+    @user_token_required
     def get(self, id):
         """Get a specific News"""
         result = NewsService.get_by_id(id)
@@ -66,6 +67,7 @@ class NewsResource(Resource):
 
     @api.doc(responses={200: 'OK', 404: 'Not Found', 400: 'Bad Request'})
     @api.expect(news, validate=True)
+    @admin_token_required
     def put(self, id):
         """ Update a news
         Use this method to change properties of the news.
@@ -98,6 +100,7 @@ class NewsResource(Resource):
 class CollectionFactsNews(Resource):
     @api.doc(responses={200: 'OK', 404: 'Not Found', 405: 'Method Not Allowed'})
     @api.expect(fact, validate=True)
+    @admin_token_required
     def post(self, news_id):
         """Add a fact to a news"""
         fact_data = request.json
@@ -123,6 +126,7 @@ class FactNews(Resource):
         """update a fact within a news"""
         pass
 
+    @admin_token_required
     def delete(self, news_id, fact_id):
         """delete a fact within a news"""
         NewsService.delete_fact(news_id, fact_id)
@@ -130,12 +134,14 @@ class FactNews(Resource):
 
 @api.route("/<string:news_id>/facts")
 class FactsInNews(Resource):
+    @user_token_required
     def get(self, news_id):
         return NewsService.get_detailed_facts_in_news(news_id)
 
 
 @api.route("/<string:news_id>/relations")
 class NewsRelations(Resource):
+    @user_token_required
     def get(self, news_id):
         """Get all entities and relations in a news"""
 
@@ -153,6 +159,7 @@ class NewsRelations(Resource):
 
 class SetNewsRelations(Resource):
     @api.expect(news_set, validate=True)
+    @user_token_required
     def post(self):
         """Get all entities and relations in a set of news"""
         set_news_id = request.json["set_news_id"]
@@ -170,6 +177,7 @@ class SetNewsRelations(Resource):
 
 @api.route("/<string:news_id>/appearance/<string:entity_id>")
 class EntityAppearanceNews(Resource):
+    @user_token_required
     def get(self, news_id, entity_id):
         """Get the number of times an entity occurs in a news"""
         return NewsService.get_number_appearance_in_news(news_id, entity_id)
@@ -178,6 +186,7 @@ class EntityAppearanceNews(Resource):
 @api.route("/appearance/<string:entity_id>")
 class EntityAppearanceNewsSet(Resource):
     @api.expect(news_set, validate=True)
+    @user_token_required
     def post(self, entity_id):
         """Get the number of times an entity occurs in a set of news"""
         set_news_id = request.json["set_news_id"]
@@ -186,6 +195,7 @@ class EntityAppearanceNewsSet(Resource):
 @api.route("/<string:news_id>/type/relations")
 class EntityRelationTypeNews(Resource):
     @api.expect(types_entity, validate=True)
+    @user_token_required
     def post(self, news_id):
         """Get all entities belongs to some specific types and their relations in a news"""
         set_entity_types = request.json["set_entity_types"]
@@ -193,6 +203,7 @@ class EntityRelationTypeNews(Resource):
 
 @api.route("/<string:news_id>/entity/<string:entity_id>/relations")
 class EntityIndividualRelationNews(Resource):
+    @user_token_required
     def get(self, news_id, entity_id):
         """Get a specified entity and its relations in a news"""
         return NewsService.get_entity_individual_relations_in_news(news_id, entity_id)
@@ -200,6 +211,7 @@ class EntityIndividualRelationNews(Resource):
 @api.route("/type/relations")
 class EntityRelationTypeSetNews(Resource):
     @api.expect(types_entity_set_news, validate=True)
+    @user_token_required
     def post(self):
         """Get all entities belongs to some specific types and their relations in a set of news"""
         set_news_id = request.json["set_news_id"]
@@ -209,6 +221,7 @@ class EntityRelationTypeSetNews(Resource):
 @api.route("/entity/<string:entity_id>/relations")
 class EntityIndividualSetNews(Resource):
     @api.expect(news_set, validate=True)
+    @user_token_required
     def post(self, entity_id):
         """Get a specified entity and its relations in a set of news"""
         set_news_id = request.json["set_news_id"]
@@ -218,6 +231,7 @@ class EntityIndividualSetNews(Resource):
 @api.route("/merge_nodes")
 class MergeNodesResource(Resource):
     @api.expect(entity_type_news, validate=True)
+    @admin_token_required
     def post(self):
         """Merge entities having the same type
         *Keep entityID property of one entity, combine for the rest properties and also merge relations
@@ -229,6 +243,7 @@ class MergeNodesResource(Resource):
 
 @api.route("/search")
 class SearchNewsResource(Resource):
+    @user_token_required
     def post(self):
         text_search = request.json["text"]
         return NewsService.search_news(text_search)
@@ -237,6 +252,7 @@ class SearchNewsResource(Resource):
 @api.route("/entity/search")
 class SearchEntityResource(Resource):
     @api.doc(responses={200: 'OK', 404: 'Not Found'})
+    @user_token_required
     def post(self):
         text_search = request.json["text"]
         type_entity = request.json["type_entity"]

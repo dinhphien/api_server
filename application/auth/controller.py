@@ -7,6 +7,9 @@ from typing import List
 from .service import AuthService
 from .model import user_account_model
 from application.utilities.jw_token import encode_auth_token
+from application.utilities.wrap_functions import admin_token_required
+
+
 api = Namespace("Auth", description="Authentication related operations")
 
 userAccount = api.model("UserAccount", user_account_model)
@@ -16,6 +19,7 @@ userAccount = api.model("UserAccount", user_account_model)
 class RegisterAdmin(Resource):
     @api.doc(responses={200: 'OK', 201: 'Created', 405: 'Method Not Allowed'})
     @api.expect(userAccount, validate=True)
+    @admin_token_required
     def post(self):
         """Create an admin account
         Use this method to create an admin account.
@@ -30,8 +34,7 @@ class RegisterAdmin(Resource):
         new_admin = request.json
         admin = AuthService.getAdmin(new_admin["username"])
         if not admin:
-            token = encode_auth_token(username=new_admin["username"], isAdmin=True)
-            result = AuthService.createAdmin(new_admin["username"], new_admin["password"], token)
+            result = AuthService.createAdmin(new_admin["username"], new_admin["password"])
             return result, 201
         else:
             return {"message": "Unable to create because the account with this username already exists"}, 405
@@ -53,10 +56,13 @@ class LoginAdmin(Resource):
         ```
         """
         admin_account = request.json
-        result = AuthService.checkAdminAccount(admin_account["username"], admin_account["password"])
-        if not result:
+        admin = AuthService.checkAdminAccount(admin_account["username"], admin_account["password"])
+        if not admin:
             return {"message": "Username or password does not match"}, 404
         else:
+            token = encode_auth_token(username=admin_account["username"], isAdmin=True)
+            result = admin
+            result[0]['token'] = token.decode('utf8')
             return result, 200
 
 
@@ -79,8 +85,7 @@ class RegisterUser(Resource):
         new_user = request.json
         user = AuthService.getUser(new_user["username"])
         if not user:
-            token = encode_auth_token(username=new_user["username"], isAdmin=False)
-            result = AuthService.createUser(new_user["username"], new_user["password"], token)
+            result = AuthService.createUser(new_user["username"], new_user["password"])
             return result, 201
         else:
             return {"message": "Unable to create because the account with this username already exists"}, 405
@@ -101,8 +106,11 @@ class LoginUser(Resource):
         ```
         """
         user_account = request.json
-        result = AuthService.checkUserAccount(user_account["username"], user_account["password"])
-        if not result:
+        user = AuthService.checkUserAccount(user_account["username"], user_account["password"])
+        if not user:
             return {"message": "Username or password does not match"}, 404
         else:
+            token = encode_auth_token(username=user_account["username"], isAdmin=False)
+            result = user
+            result[0]['token'] = token.decode('utf8')
             return result, 200

@@ -1,10 +1,12 @@
 from flask import request
 from flask_restx import Namespace, Resource, abort
 from typing import List
+from datetime import datetime
 
 from application.times.service import TimeService
 from application.times.model import time_model, entity_with_type_model
-from datetime import datetime
+from application.utilities.wrap_functions import user_token_required, admin_token_required
+
 
 api = Namespace("Times", description="times related operations")
 time = api.model("Time", time_model)
@@ -12,6 +14,7 @@ entity_type_news = api.model("Entity_Type_News", entity_with_type_model)
 
 @api.route("/")
 class TimesCollection(Resource):
+    @user_token_required
     def get(self) -> List:
         """Get all Times
         Limit 1000 time entities
@@ -20,6 +23,7 @@ class TimesCollection(Resource):
 
     @api.doc(responses={200: 'OK', 201: 'Created', 405: 'Method Not Allowed', 400: 'Bad Request'})
     @api.expect(time, validate=True)
+    @admin_token_required
     def post(self):
         """Create a new time
         Use this method to create a new time.
@@ -50,6 +54,7 @@ class TimesCollection(Resource):
 @api.route("/<string:id>")
 class TimeEntity(Resource):
     @api.doc(responses={200: 'OK', 404: 'Not Found'})
+    @user_token_required
     def get(self, id):
         """Get a specific Time"""
         result = TimeService.get_by_id(id)
@@ -60,6 +65,7 @@ class TimeEntity(Resource):
 
     @api.doc(responses={200: 'OK', 404: 'Not Found', 400: 'Bad Request'})
     @api.expect(time)
+    @admin_token_required
     def put(self, id):
         """ Update a time
         Use this method to change properties of an time.
@@ -90,6 +96,7 @@ class TimeEntity(Resource):
             return TimeService.update(data, id)
 
     @api.doc(responses={200: 'OK', 405: 'Method Not Allowed'})
+    @admin_token_required
     def delete(self, id):
         """Delete a time"""
         is_referenced = TimeService.is_in_news(id)
@@ -99,22 +106,24 @@ class TimeEntity(Resource):
             TimeService.delete(id)
             return {"message": "Successful"}, 200
 
-    @api.route("/search")
-    class SearchTimeResource(Resource):
-        @api.doc(responses={200: 'OK', 404: 'Not Found'})
-        def post(self):
-            text_search = request.json["text"]
-            return TimeService.search(text_search)
+@api.route("/search")
+class SearchTimeResource(Resource):
+    @api.doc(responses={200: 'OK', 404: 'Not Found'})
+    @user_token_required
+    def post(self):
+        text_search = request.json["text"]
+        return TimeService.search(text_search)
 
-    @api.route("/merge_nodes")
-    class MergeNodesResource(Resource):
-        @api.expect(entity_type_news, validate=True)
-        def post(self):
-            """Merge entities having the same type
-            *Keep entityID property of one entity, combine for the rest properties and also merge relations
-            """
-            set_entity_id = request.json["set_entity_id"]
-            return TimeService.merge_nodes(set_entity_id)
+@api.route("/merge_nodes")
+class MergeNodesResource(Resource):
+    @api.expect(entity_type_news, validate=True)
+    @admin_token_required
+    def post(self):
+        """Merge entities having the same type
+        *Keep entityID property of one entity, combine for the rest properties and also merge relations
+        """
+        set_entity_id = request.json["set_entity_id"]
+        return TimeService.merge_nodes(set_entity_id)
 
 
 

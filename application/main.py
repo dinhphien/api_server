@@ -19,7 +19,7 @@ def create_app(config_name):
     app.config.from_object(config_by_name[config_name])
     app.config["JSON_AS_ASCII"] = False
     app.config['CORS_HEADERS'] = 'Content-Type'
-    api = Api(app, authorizations=authorizations)
+    api = Api(app, authorizations=authorizations, security='apikey')
     register_routes(api, app)
     CORS(app, resources={r'/api/*': {'origins': '*'}})
     return app

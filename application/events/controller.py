@@ -4,6 +4,7 @@ from typing import List
 
 from application.events.service import EventService
 from application.events.model import event_model, entity_with_type_model
+from application.utilities.wrap_functions import user_token_required, admin_token_required
 
 api = Namespace("Events", description="events related operations")
 event = api.model("Event", event_model)
@@ -12,6 +13,7 @@ entity_type_news = api.model("Entity_Type_News", entity_with_type_model)
 
 @api.route("/")
 class EventsCollection(Resource):
+    @user_token_required
     def get(self) -> List:
         """Get all Events
         Limit 1000 event entities
@@ -20,6 +22,7 @@ class EventsCollection(Resource):
 
     @api.doc(responses={200: 'OK', 201: 'Created', 405: 'Method Not Allowed'})
     @api.expect(event, validate=True)
+    @admin_token_required
     def post(self):
         """Create a new event
         Use this method to create a new event.
@@ -44,6 +47,7 @@ class EventsCollection(Resource):
 @api.route("/<string:id>")
 class EventEntity(Resource):
     @api.doc(responses={200: 'OK', 404: 'Not Found'})
+    @user_token_required
     def get(self, id):
         """Get a specific Event"""
         result = EventService.get_by_id(id)
@@ -54,6 +58,7 @@ class EventEntity(Resource):
 
     @api.doc(responses={200: 'OK', 404: 'Not Found', 400: 'Bad Request'})
     @api.expect(event)
+    @admin_token_required
     def put(self, id):
         """ Update an event
         Use this method to change properties of an event.
@@ -78,6 +83,7 @@ class EventEntity(Resource):
             return EventService.update(data, id)
 
     @api.doc(responses={200: 'OK', 405: 'Method Not Allowed'})
+    @admin_token_required
     def delete(self, id):
         """Delete an event"""
         is_referenced = EventService.is_in_news(id)
@@ -87,22 +93,24 @@ class EventEntity(Resource):
             EventService.delete(id)
             return {"message": "Successful"}, 200
 
-    @api.route("/search")
-    class SearchEventResource(Resource):
-        @api.doc(responses={200: 'OK', 404: 'Not Found'})
-        def post(self):
-            text_search = request.json["text"]
-            return EventService.search(text_search)
+@api.route("/search")
+class SearchEventResource(Resource):
+    @api.doc(responses={200: 'OK', 404: 'Not Found'})
+    @user_token_required
+    def post(self):
+        text_search = request.json["text"]
+        return EventService.search(text_search)
 
-    @api.route("/merge_nodes")
-    class MergeNodesResource(Resource):
-        @api.expect(entity_type_news, validate=True)
-        def post(self):
-            """Merge entities having the same type
-            *Keep entityID property of one entity, combine for the rest properties and also merge relations
-            """
-            set_entity_id = request.json["set_entity_id"]
-            return EventService.merge_nodes(set_entity_id)
+@api.route("/merge_nodes")
+class MergeNodesResource(Resource):
+    @api.expect(entity_type_news, validate=True)
+    @admin_token_required
+    def post(self):
+        """Merge entities having the same type
+        *Keep entityID property of one entity, combine for the rest properties and also merge relations
+        """
+        set_entity_id = request.json["set_entity_id"]
+        return EventService.merge_nodes(set_entity_id)
 
 
 

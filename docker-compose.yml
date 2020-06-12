@@ -9,21 +9,21 @@ services:
       - BIND_HOST=0.0.0.0
       - BIND_PORT=5000
       - NEO4J_HOST=192.168.99.1
-      - NEO4J_PORT=7688
+      - NEO4J_PORT=7687
       - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=xyzzy
-      - NEO4J_SCHEME=bolt+routing
-#    deploy:
-#      mode: replicated
-#      endpoint_mode: vip
-#      replicas: 4
-#  visualizer:
-#    image: dockersamples/visualizer
-#    ports:
-#      - "8080:8080"
-#    stop_grace_period: 1m30s
-#    volumes:
-#      - "/var/run/docker.sock:/var/run/docker.sock"
-#    deploy:
-#      placement:
-#        constraints: [node.role == manager]
+      - NEO4J_PASSWORD=neo4j
+      - NEO4J_SCHEME=bolt
+    deploy:
+      mode: replicated
+      endpoint_mode: vip
+      replicas: 6
+  visualizer:
+    image: dockersamples/visualizer
+    ports:
+      - "8080:8080"
+    stop_grace_period: 1m30s
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]

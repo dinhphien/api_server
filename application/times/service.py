@@ -17,13 +17,15 @@ def convert_date_results_to_string(result: List)->List:
 
 class TimeService:
     @staticmethod
-    def get_all() -> List:
+    def get_all(start=0, limit=100) -> List:
         query = """
         MATCH (tim:Time)
         RETURN tim.entityID as entityID, tim.name as name, tim.des as description
-        LIMIT 1000
+        ORDER BY tim.entityID
+        SKIP $start
+        LIMIT $limit
         """
-        result = dao.run_read_query(query).data()
+        result = dao.run_read_query(query, start= start, limit=limit).data()
         return convert_date_results_to_string(result)
 
     @staticmethod
@@ -75,13 +77,17 @@ class TimeService:
         return dao.run_write_query(query, id_entity=tim_id).data()
 
     @staticmethod
-    def search(text_search: str):
+    def search(start=0, limit=100, *args, **kwargs):
+
         query = """
             MATCH(entity:Time)
             WHERE entity.des CONTAINS $property
             RETURN entity.entityID as entityID, entity.name as name, entity.des as description
+            ORDER BY entity.entityID
+            SKIP $start
+            LIMIT $limit
             """
-        result =  dao.run_read_query(query, {"property": text_search}).data()
+        result =  dao.run_read_query(query, {"property": args[0], "start":start, "limit":limit}).data()
         return convert_date_results_to_string(result)
 
     @staticmethod

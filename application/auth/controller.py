@@ -1,8 +1,5 @@
 from flask import request
-from flask_restx import Namespace, Resource, abort
-from typing import List
-
-
+from flask_restx import Namespace, Resource
 
 from .service import AuthService
 from .model import user_account_model
@@ -72,7 +69,7 @@ class RegisterUser(Resource):
     @api.doc(responses={200: 'OK', 201: 'Created', 405: 'Method Not Allowed'})
     @api.expect(userAccount, validate=True)
     def post(self):
-        """Create a user account
+        """Create an user account
         Use this method to create a user account.
         * Send a JSON object with the detail in the request body.
         ```

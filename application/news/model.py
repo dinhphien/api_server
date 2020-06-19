@@ -51,3 +51,6 @@ fact_model = {
     "subject_type": fields.String(required=True, description="the type of the subject", enum=SUBJECT_TYPES),
     "object_type": fields.String(required=True, description= "The type of the object", enum=OBJECT_TYPES)
 }
+input_key_model = {
+    "text": fields.String(required=True, description="Keyword for searching")
+}

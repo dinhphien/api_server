@@ -5,13 +5,15 @@ from application.utilities.graph import serialize_subgraph_to_dict, serialize_no
 
 class NewsService:
     @staticmethod
-    def get_all() -> List:
+    def get_all(start=0, limit=100) -> List:
         query = """
-        MATCH (news:News) 
+        MATCH (news:News)
         RETURN news.entityID as entityID, news.link as link, news.topics as topics
-        LIMIT 1000
+        ORDER BY news.entityID
+        SKIP $start
+        LIMIT $limit
         """
-        return dao.run_read_query(query).data()
+        return dao.run_read_query(query, {"start": start, "limit": limit}).data()
 
     @staticmethod
     def get_by_id(news_id: str):
@@ -221,13 +223,16 @@ class NewsService:
             return {}
 
     @staticmethod
-    def search_news(input_text: str)-> List:
+    def search_news(start=0, limit=100, *args, **kwargs)-> List:
         query = """
         MATCH(news:News)
         WHERE news.link CONTAINS $property
         RETURN news.entityID as entityID, news.link as link, news.topics as topics
+        ORDER BY news.entityID
+        SKIP $start
+        LIMIT $limit
         """
-        return dao.run_read_query(query, {"property": input_text}).data()
+        return dao.run_read_query(query, {"property": args[0], "start": start, "limit": limit}).data()
 
     @staticmethod
     def search_entity(input_type_entity, input_text)-> List:

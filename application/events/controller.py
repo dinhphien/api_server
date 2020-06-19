@@ -1,26 +1,30 @@
 from flask import request
-from flask_restx import Namespace, Resource, abort
+from flask_restx import Namespace, Resource, abort, reqparse
 from typing import List
 
 from application.events.service import EventService
 from application.events.model import event_model, entity_with_type_model
 from application.utilities.wrap_functions import user_token_required, admin_token_required
+from application.utilities.paginating import paginate_results
 
 api = Namespace("Events", description="events related operations")
 event = api.model("Event", event_model)
 entity_type_news = api.model("Entity_Type_News", entity_with_type_model)
 
-
+events_pagin_parser = reqparse.RequestParser()
+events_pagin_parser.add_argument('start', location='args', type=int, help='The position to start getting results')
+events_pagin_parser.add_argument('limit', location='args', type=int, help='Limit the number of news returned')
 @api.route("/")
 class EventsCollection(Resource):
+    @api.doc(responses={200: 'OK'}, parser=events_pagin_parser)
     @user_token_required
     def get(self) -> List:
         """Get all Events
         Limit 1000 event entities
         """
-        return EventService.get_all()
+        return paginate_results(events_pagin_parser, request.base_url, EventService.get_all)
 
-    @api.doc(responses={200: 'OK', 201: 'Created', 405: 'Method Not Allowed'})
+    @api.doc(responses={200: 'OK', 201: 'Created', 400: 'Bad Request'})
     @api.expect(event, validate=True)
     @admin_token_required
     def post(self):
@@ -41,7 +45,7 @@ class EventsCollection(Resource):
             result = EventService.create(new_event)
             return result[0], 201
         else:
-            return {"message": "Unable to create because the event with this id already exists"}, 405
+            return {"message": "Unable to create because the event with this id already exists"}, 400
 
 
 @api.route("/<string:id>")
@@ -82,31 +86,34 @@ class EventEntity(Resource):
         else:
             return EventService.update(data, id)
 
-    @api.doc(responses={200: 'OK', 405: 'Method Not Allowed'})
+    @api.doc(responses={200: 'OK', 400: 'Bad Request'})
     @admin_token_required
     def delete(self, id):
         """Delete an event"""
         is_referenced = EventService.is_in_news(id)
         if is_referenced:
-            return {"message": "Unable to delete because the event with this id is being referenced"}, 405
+            return {"message": "Unable to delete because the event with this id is being referenced"}, 400
         else:
             EventService.delete(id)
             return {"message": "Successful"}, 200
 
 @api.route("/search")
 class SearchEventResource(Resource):
-    @api.doc(responses={200: 'OK', 404: 'Not Found'})
+    @api.doc(responses={200: 'OK'}, parser=events_pagin_parser)
     @user_token_required
     def post(self):
-        text_search = request.json["text"]
-        return EventService.search(text_search)
+        if "text" in request.json:
+            text_search = request.json["text"]
+        else:
+            text_search = ' '
+        return paginate_results(events_pagin_parser, request.base_url, EventService.search, text_search)
 
 @api.route("/merge_nodes")
 class MergeNodesResource(Resource):
     @api.expect(entity_type_news, validate=True)
     @admin_token_required
     def post(self):
-        """Merge entities having the same type
+        """Merge entities having the Event type
         *Keep entityID property of one entity, combine for the rest properties and also merge relations
         """
         set_entity_id = request.json["set_entity_id"]

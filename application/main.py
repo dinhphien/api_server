@@ -1,5 +1,7 @@
 from application.config import config_by_name
+from application.settings import BIND_HOST, BIND_PORT
 from application.routes import register_routes
+
 from flask import Flask
 from flask_restx import Api
 from flask_cors import CORS
@@ -24,8 +26,10 @@ def create_app(config_name):
     CORS(app, resources={r'/api/*': {'origins': '*'}})
     return app
 
+
+
 app = create_app(os.getenv('BOILERPLATE_ENV') or 'dev')
 app.app_context().push()
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host=BIND_HOST, port=BIND_PORT)

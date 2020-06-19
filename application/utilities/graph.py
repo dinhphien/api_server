@@ -3,9 +3,6 @@ from typing import Dict
 from itertools import chain
 
 
-
-
-
 def serialize_node_to_dict(node: Node) -> Dict:
 
     result_node = {}

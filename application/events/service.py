@@ -4,13 +4,15 @@ from application.utilities.graph import serialize_node_to_dict
 
 class EventService:
     @staticmethod
-    def get_all() -> List:
+    def get_all(start=0, limit=100) -> List:
         query = """
         MATCH (event:Event)
         RETURN event.entityID as entityID, event.name as name, event.des as description
-        LIMIT 1000
+        ORDER BY event.entityID
+        SKIP $start
+        LIMIT $limit
         """
-        return dao.run_read_query(query).data()
+        return dao.run_read_query(query, start=start, limit=limit).data()
 
     @staticmethod
     def get_by_id(event_id):
@@ -58,13 +60,12 @@ class EventService:
         return dao.run_write_query(query, id_entity=event_id).data()
 
     @staticmethod
-    def search(text_search: str):
-        query = """
-            MATCH(entity:Event)
-            WHERE entity.des CONTAINS $property
-            RETURN entity.entityID as entityID, entity.name as name, entity.des as description
-            """
-        return dao.run_read_query(query, {"property": text_search}).data()
+    def search(start=0, limit=100, *args, **kwargs):
+        text_search = args[0]
+        query = "CALL db.index.fulltext.queryNodes(" + "'eventsFullTextSearch', '" + text_search + \
+                "') YIELD node, score  RETURN node.entityID as entityID, node.name as name," \
+                "node.des as description, score ORDER BY score DESC"
+        return dao.run_read_query(query).data()[start:start+limit]
 
     @staticmethod
     def merge_nodes(set_entity_id: List[str]) -> Dict:

@@ -3,9 +3,6 @@ from typing import List, Type
 
 class BaseConfig:
     CONFIG_NAME = "base"
-    # USE_MOCK_EQUIVALENCY = False
-    # DEBUG = False
-    # SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 
@@ -17,8 +14,7 @@ class DevelopmentConfig(BaseConfig):
     DEBUG = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TESTING = False
-    # RESTPLUS_JSON = {'cls': CustomJSONEncoder}
-    # SQLALCHEMY_DATABASE_URI = "sqlite:///{0}/app-dev.db".format(basedir)
+
 
 
 class TestingConfig(BaseConfig):
@@ -27,7 +23,7 @@ class TestingConfig(BaseConfig):
     DEBUG = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TESTING = True
-    # SQLALCHEMY_DATABASE_URI = "sqlite:///{0}/app-test.db".format(basedir)
+
 
 
 class ProductionConfig(BaseConfig):
@@ -36,7 +32,6 @@ class ProductionConfig(BaseConfig):
     DEBUG = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TESTING = False
-    # SQLALCHEMY_DATABASE_URI = "sqlite:///{0}/app-prod.db".format(basedir)
 
 
 EXPORT_CONFIGS: List[Type[BaseConfig]] = [
@@ -45,5 +40,8 @@ EXPORT_CONFIGS: List[Type[BaseConfig]] = [
     ProductionConfig,
 ]
 config_by_name = {cfg.CONFIG_NAME: cfg for cfg in EXPORT_CONFIGS}
+
+START_PAGIN = 0
+LIMIT_PAGIN = 1000
 
 

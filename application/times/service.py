@@ -6,7 +6,7 @@ def convert_date_results_to_string(result: List)->List:
     for index in range(0, len(result)):
         record = result[index]
         if isinstance(record['description'], list):
-            for i in range(0, len(record)):
+            for i in range(0, len(record['description'])):
                 record['description'][i] = record['description'][i].__str__()
         else:
             record['description'] = record['description'].__str__()
@@ -81,7 +81,7 @@ class TimeService:
 
         query = """
             MATCH(entity:Time)
-            WHERE entity.des CONTAINS $property
+            WHERE entity.des CONTAINS $property OR entity.name CONTAINS $property
             RETURN entity.entityID as entityID, entity.name as name, entity.des as description
             ORDER BY entity.entityID
             SKIP $start

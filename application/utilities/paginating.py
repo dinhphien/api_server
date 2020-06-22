@@ -1,4 +1,4 @@
-from application.config import START_PAGIN, LIMIT_PAGIN
+from application.settings import START_PAGIN, LIMIT_PAGIN
 
 
 def paginate_results(req_parser, base_url, f, *paras):

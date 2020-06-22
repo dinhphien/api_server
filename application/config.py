@@ -41,7 +41,6 @@ EXPORT_CONFIGS: List[Type[BaseConfig]] = [
 ]
 config_by_name = {cfg.CONFIG_NAME: cfg for cfg in EXPORT_CONFIGS}
 
-START_PAGIN = 0
-LIMIT_PAGIN = 1000
+
 
 

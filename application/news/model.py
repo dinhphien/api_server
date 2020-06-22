@@ -43,7 +43,7 @@ fact_model = {
     "entityID": fields.String(required=True, description="Id of the fact"),
     "relation": fields.String(required=True, description="Relations between entities that are supported", enum=RELATIONS),
     "time_id": fields.String(required=False, description="Id of the time at which the fact occurs"),
-    "time_type": fields.String(required=True, description="the type of the time", default="Time"),
+    "time_type": fields.String(required=True, description="the type of the time", enum=["Time"]),
     "location_id": fields.String(required=False, description="Id of the location or country in which the fact occurs"),
     "location_type": fields.String(required=True, description="the type of the time", enum=LOCATION_TYPES, default=LOCATION_TYPES[0]),
     "subject_id": fields.String(required=True, description="Id of the subject appears in the fact"),

@@ -8,7 +8,7 @@ from .model import news_model, set_news_model, types_entity_model, \
     input_key_model,ENTITY_TYPES
 from application.utilities.wrap_functions import user_token_required, admin_token_required
 from application.utilities.paginating import paginate_results
-from application.config import START_PAGIN, LIMIT_PAGIN
+
 from typing import List
 
 api = Namespace("News", description="news related operations")
@@ -139,6 +139,8 @@ class CollectionFactsNews(Resource):
         ```
         """
         fact_data = request.json
+        if fact_data["subject_id"] == fact_data["object_id"] and fact_data["subject_type"] == fact_data["object_type"]:
+            return {"message": "Subject and Object cannot be the same entity!"}, 400
         relation_type = (fact_data['subject_type'], fact_data['relation'], fact_data['object_type'])
         # check whether or not the relation type is supported
         # if

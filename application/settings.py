@@ -14,3 +14,6 @@ NEO4J_PASSWORD = env('NEO4J_PASSWORD', default='neo4j')
 NEO4J_SCHEME = env('NEO4J_SCHEME', default='bolt+routing')
 
 SECRET_KEY = env("SECRET_KEY", "I'm Ron Burgundy?")
+START_PAGIN = env.int('START_PAGIN', default=0)
+LIMIT_PAGIN = env.int('LIMIT_PAGIN', default=1000)
+LIMIT_NEWS =  env.int('LIMIT_NEWS', default=1000)

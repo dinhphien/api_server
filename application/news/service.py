@@ -1,7 +1,7 @@
 from typing import List, Dict
 from application import dao
 from application.utilities.graph import serialize_subgraph_to_dict, serialize_node_to_dict
-
+from application.settings import LIMIT_NEWS
 
 class NewsService:
     @staticmethod
@@ -19,6 +19,7 @@ class NewsService:
     def get_by_id(news_id: str):
         query = '''
         MATCH (news:News {entityID : $id})
+        USING INDEX news:News(entityID) 
         RETURN news.entityID as entityID, news.link as link, news.topics as topics
         '''
         return dao.run_read_query(query, id=news_id).data()
@@ -35,6 +36,7 @@ class NewsService:
     def update(news_properties: dict,news_id: str):
         query = """
         MATCH (news:News{entityID: $id_news})
+        USING INDEX news:News(entityID)
         SET news = $props
         RETURN news.entityID as entityID, news.link as link, news.topics as topics
         """
@@ -44,6 +46,7 @@ class NewsService:
     def delete_by_id(news_id: str):
         query = """
         MATCH (news:News{entityID: $id_news})
+        USING INDEX news:News(entityID)
         OPTIONAL MATCH (news)-[:HAS_FACT]->(fact:Fact)
         DETACH DELETE news, fact
         """
@@ -82,7 +85,8 @@ class NewsService:
     @staticmethod
     def delete_fact(news_id: str, fact_id: str):
         query = """
-        MATCH (:News{entityID: $id_news})-[:HAS_FACT]-(fact:Fact{entityID: $id_fact})
+        MATCH (news:News{entityID: $id_news})-[:HAS_FACT]-(fact:Fact{entityID: $id_fact})
+        USING INDEX news:News(entityID)
         DETACH DELETE fact
         """
         return dao.run_write_query(query, {"id_news": news_id, "id_fact": fact_id}).data()
@@ -93,6 +97,7 @@ class NewsService:
     def get_all_relations_in_news(news_id: str) -> Dict:
         query = """
         MATCH (news:News{entityID: $id})-[:HAS_FACT]->(facts:Fact)-[rel]->(entity)
+        USING INDEX news:News(entityID)
         RETURN facts, rel, entity
         """
         result = dao.run_read_query(query, id=news_id).graph()
@@ -101,9 +106,12 @@ class NewsService:
     @staticmethod
     def get_all_relations_in_set_news(set_news_id: List[str]) -> Dict:
         id_set_news = list(set(set_news_id))
+        if len(id_set_news) > LIMIT_NEWS:
+            id_set_news = id_set_news[:LIMIT_NEWS]
         query = """
         UNWIND $set_news_id as news_id
         MATCH (news:News{entityID:news_id})-[:HAS_FACT]->(facts:Fact)-[rel]->(entity)
+        USING INDEX news:News(entityID)
         RETURN facts, rel, entity
         """
         result = dao.run_read_query(query, set_news_id=id_set_news).graph()
@@ -138,6 +146,7 @@ class NewsService:
     def get_number_appearance_in_news(news_id: str, entity_id: str) -> Dict:
         query = """
         MATCH (news:News{entityID: $id_news})-[:HAS_FACT]->(facts:Fact)-[]->({entityID:$id_entity})
+        USING INDEX news:News(entityID)
         RETURN count(facts) as numberAppearance
         """
         result = dao.run_read_query(query, {"id_news": news_id, "id_entity": entity_id}).data()
@@ -145,18 +154,23 @@ class NewsService:
 
     @staticmethod
     def get_number_appearance_in_set_news(set_news_id: List[str], entity_id: str) -> Dict:
+        id_set_news = list(set(set_news_id))
+        if len(id_set_news) > LIMIT_NEWS:
+            id_set_news = id_set_news[:LIMIT_NEWS]
         query = """
         UNWIND $set_id_news as news_id
         MATCH (news:News{entityID: news_id})-[:HAS_FACT]->(facts:Fact)-[]->({entityID:$id_entity})
+        USING INDEX news:News(entityID)
         RETURN count(facts) as numberAppearance
         """
-        result = dao.run_read_query(query, {"set_id_news": set_news_id, "id_entity": entity_id}).data()
+        result = dao.run_read_query(query, {"set_id_news": id_set_news, "id_entity": entity_id}).data()
         return {"numberAppearance": result[0]["numberAppearance"]}
 
     @staticmethod
     def get_entity_type_relations_in_news(news_id: str, entity_type: List[str]) -> Dict:
         query = """
         MATCH (news:News{entityID: $id_news})-[:HAS_FACT]->(facts:Fact)-[rel]->(entity)
+        USING INDEX news:News(entityID)
         WHERE any( label IN labels(entity) WHERE label IN $type_entity)
         RETURN facts, rel, entity
         """
@@ -165,13 +179,17 @@ class NewsService:
 
     @staticmethod
     def get_entity_type_relations_in_set_news(set_news_id: List[str], entity_type: List[str]) -> Dict:
+        id_set_news = list(set(set_news_id))
+        if len(id_set_news) > LIMIT_NEWS:
+            id_set_news = id_set_news[:LIMIT_NEWS]
         query = """
         UNWIND $set_id_news as news_id
         MATCH (news:News{entityID: news_id})-[:HAS_FACT]->(facts:Fact)-[rel]->(entity)
+        USING INDEX news:News(entityID)
         WHERE any( label IN labels(entity) WHERE label IN $type_entity)
         RETURN facts, rel, entity
         """
-        result= dao.run_read_query(query, {"set_id_news": list(set(set_news_id)),
+        result= dao.run_read_query(query, {"set_id_news": id_set_news,
                                         "type_entity": list(set(entity_type))}).graph()
         return serialize_subgraph_to_dict(result)
 
@@ -179,6 +197,7 @@ class NewsService:
     def get_entity_individual_relations_in_news(news_id: str, entity_id: str)->Dict:
         query = """
         MATCH (news:News{entityID: $id_news})-[:HAS_FACT]->(fact:Fact)-[]->({entityID:$id_entity})
+        USING INDEX news:News(entityID)
         WITH fact
         MATCH (fact)-[rel]->(entity)
         RETURN fact, rel, entity
@@ -188,14 +207,18 @@ class NewsService:
 
     @staticmethod
     def get_entity_individual_relations_in_set_news(set_news_id: List[str], entity_id:str)->Dict:
+        id_set_news = list(set(set_news_id))
+        if len(id_set_news) > LIMIT_NEWS:
+            id_set_news = id_set_news[:LIMIT_NEWS]
         query = """
         UNWIND $set_id_news as news_id
         MATCH (news:News{entityID: news_id})-[:HAS_FACT]->(facts:Fact)-[]->({entityID:$id_entity})
+        USING INDEX news:News(entityID)
         WITH facts
         MATCH (facts)-[rel]->(entity)
         RETURN facts, rel, entity
         """
-        result = dao.run_read_query(query, {"set_id_news": list(set(set_news_id)),
+        result = dao.run_read_query(query, {"set_id_news": id_set_news,
                                             "id_entity": entity_id}).graph()
         return serialize_subgraph_to_dict(result)
 
@@ -247,6 +270,7 @@ class NewsService:
     def get_detailed_facts_in_news(news_id: str):
         query= """
         MATCH(news:News{entityID: $id_news})-[:HAS_FACT]->(facts:Fact)
+        USING INDEX news:News(entityID)
         WITH facts
         MATCH (facts)-[r]->(entity)
         RETURN facts.entityID as factID, collect(type(r)) as predicate, collect(entity.entityID) as entityID
